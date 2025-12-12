@@ -1,4 +1,4 @@
 # FlashCard
-write note as flashcard, stored offline in browser cache.
+For creating flashcard-style notes that are stored offline in the browser cache.
 ## [live Demo](https://ehsanjelodar.github.io/FlashCard/FlashCardESD.html)
 
