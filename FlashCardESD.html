@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="icon/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="icon/favicon.svg" />
+    <link rel="shortcut icon" href="icon/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="icon/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="FlashCard" />
+    <link rel="manifest" href="icon/site.webmanifest" />
+    <title>Flashcard App (By Ehsan Jelodar)</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --border-color: #d2d2d2; /*//#e5e7eb;*/
+            --bg-color: #f9fafb;
+            --text-color: #111827;
+            --highlight-border: #71768e;
+            --tool-bg-hover: #f3f4f6;
+            --editor-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            --transition: all 0.2s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: var(--bg-color);
+            /*display: flex;
+            flex-direction: column;
+            align-items: center;*/
+            min-height: 100vh;
+            padding: 1rem;
+            color: var(--text-color);
+            /*min-height: calc( 100vh + 50px);*/
+
+        }
+        .page{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+
+        }
+
+        .flashcard-container {
+            width: 90%;
+            max-width: 800px;
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: var(--editor-shadow);
+            margin-top: 2px;
+            position: relative;
+        }
+
+        .editor-container {
+            width: 100%;
+            background: white;
+            border-radius: 0.5rem;
+            display: grid;
+            gap: 1rem;
+        }
+
+        .editor {
+            position: relative;
+            min-height: 19rem;
+            padding: 0.75rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            resize: vertical;
+            outline: none;
+            text-align: center;
+        }
+
+        .editor:empty::before {
+            content: 'Type and style your text here...';
+            color: #9ca3af;
+            position: relative;
+            pointer-events: none;
+            text-align: center;
+        }
+
+        .editor:focus {
+            border-color: var(--primary-color);
+        }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .tool-btn, .align-btn {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.375rem;
+            background: white;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .tool-btn:hover, .align-btn:hover {
+            background: var(--tool-bg-hover);
+        }
+
+        .tool-btn.active {
+            border-color: var(--primary-color);
+            background: #eff6ff;
+        }
+
+        .font-size-display {
+            padding: 0.5rem 0.3rem;
+            font-size: 0.775rem;
+            text-align: center;
+            min-width: 2rem;
+            user-select: none;
+            color: #4c4c4c;
+        }
+
+        .highlight-colors {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .highlight-color {
+            width: 1.75rem;
+            height: 1.75rem;
+            border-radius: 50%;
+            border: 2px solid #2626262b;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .highlight-color:hover {
+            transform: scale(1.1);
+        }
+
+        .highlight-color.active {
+            border-color: var(--highlight-border);
+            transform: scale(1.1);
+        }
+
+        .submit-btn {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .submit-btn:hover {
+            background: #1d4ed8;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+        }
+
+        .nav-btn {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-btn:hover {
+            background: #1d4ed8;
+        }
+
+        .nav-btn:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .new-card-btn {
+            background: #28a745;
+        }
+
+        .new-card-btn:hover {
+            background: #218838;
+        }
+
+        .export-import-container {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .manage-db-container {
+            position: absolute;
+            top: 0.5rem;
+            left: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .export-btn, .import-btn, .manage-db-btn {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            background: #6c757d;
+            border: none;
+            border-radius: 0.375rem;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .export-btn:hover, .import-btn:hover, .manage-db-btn:hover {
+            background: #5a6268;
+        }
+
+        .db-dropdown {
+            width: 12rem;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            max-height: 12rem;
+            overflow-y: auto;
+            display: none;
+            /*position: absolute;*/
+            top: 100%;
+            margin-top: 0.5rem;
+            box-shadow: var(--editor-shadow);
+            z-index: 10;
+        }
+
+        .db-item {
+            padding: 0.75rem;
+            cursor: pointer;
+            font-size: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .db-item:last-child {
+            border-bottom: none;
+        }
+
+        .db-item:hover {
+            background: var(--tool-bg-hover);
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            color: white;
+            border-radius: 0.25rem;
+            border: none;
+            cursor: pointer;
+        }
+
+        .delete-btn:hover {
+            background: #c82333;
+        }
+        .add-small-icon {
+            background: #1fc124;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.85rem;
+            color: white;
+            border-radius: 0.25rem;
+            border: none;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .search-container {
+           /* position: relative; */ /*can be without position*/
+            position: sticky;
+            bottom: 1rem;
+            width: 90%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 0.95rem;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 0.75rem;
+            font-size: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            box-shadow: var(--editor-shadow);
+            outline: none;
+            text-align: center;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary-color);
+        }
+
+        .dropdown {
+            width: 100%;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            max-height: 12rem;
+            overflow-y: auto;
+            display: none;
+            /*position: absolute;*/
+            top: 100%;
+            margin-top: 0.5rem;
+            box-shadow: var(--editor-shadow);
+            z-index: 100;
+        }
+
+        .dropdown-item {
+            padding: 0.75rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-item:hover {
+            background: var(--tool-bg-hover);
+        }
+
+        .highlight {
+            background: yellow;
+            font-weight: bold;
+        }
+
+        .card-info {
+            text-align: center;
+            margin-bottom: 0.8rem;
+            font-size: 1rem;
+        }
+
+        .search-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .icon {
+            width: 1rem;
+            height: 1rem;
+            fill: white;
+        }
+
+        .no-select {
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        .highlighted {
+            padding: 0.125rem 0.25rem;
+            border-radius: 0.25rem;
+        }
+        .delete-card-btn {
+            background: #dc3545;
+            margin-left: auto;
+
+        }
+        .delete-card-btn:hover {
+            background: #c82333;
+        }
+        .delete-card-btn:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+
+     #currentIndexNumber {
+      outline: none;
+      font-family: inherit;
+      font-size: inherit;
+      background-color: transparent;
+      width: 65px;
+      text-align: center;
+      padding: 5px 0px;
+      border-radius: 5px;
+      margin: 0px 5px;
+      cursor: pointer;
+      border: solid 1px #dbdbdb;
+    }
+    #currentIndexNumber:focus {
+      border-color: #394eff; 
+      box-shadow: 0 0 3px #0048ff33; /* optional glowing effect */
+    }
+
+    /*--*/
+
+    /*--*/
+
+    /* Remove arrows in input number for Chrome
+    #currentIndexNumber::-webkit-outer-spin-button,
+    #currentIndexNumber::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    */
+        @media (max-width: 36rem) {
+            .flashcard-container {
+                width: 95%;
+                padding: 1rem;
+                margin-top: 2px;
+            }
+
+            .editor-container {
+                padding: 0;
+            }
+
+            .editor {
+                min-height: 8rem;
+                font-size: 0.875rem;
+            }
+
+            .nav-btn {
+                padding: 0.625rem 1.25rem;
+                font-size: 0.875rem;
+            }
+
+            .tool-btn , .align-btn{
+                padding: 0.375rem 0.625rem;
+                font-size: 0.75rem;
+            }
+
+            .font-size-display {
+                padding: 0.375rem 0.625rem;
+                font-size: 0.75rem;
+                min-width: 2rem;
+            }
+
+            .export-btn, .import-btn, .manage-db-btn {
+                padding: 0.375rem 0.625rem;
+                font-size: 0.75rem;
+            }
+
+            input[type="text"] {
+                font-size: 0.875rem;
+            }
+
+            .dropdown-item, .db-item {
+                font-size: 0.75rem;
+            }
+
+            .db-dropdown {
+                width: 9rem;
+            }
+
+            .submit-btn {
+                padding: 0.625rem 1.25rem;
+                font-size: 0.875rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+
+<div class="page">
+    <div class="flashcard-container">
+        <div class="manage-db-container">
+            <button id="manageDbBtn" class="manage-db-btn">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9h-4v4h-2v-4H9V9h4V5h2v4h4v2z"/>
+                </svg>
+                 
+            </button>
+            <div class="db-dropdown" id="dbDropdown"></div>
+        </div>
+        <div class="export-import-container">
+            <button id="importBtn" class="import-btn" title="Import">
+                <svg class="icon" viewBox="0 0 24 24">
+                   <path d="M19 13v6H5v-6H3v8h18v-8h-2zM12 3l-7 7h4v6h6v-6h4l-7-7z"/>
+                </svg>
+                
+            </button>
+            <button id="exportBtn" class="export-btn" title="Download">
+                <svg class="icon" viewBox="0 0 24 24">
+                  <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                </svg> 
+                
+            </button>
+            <input type="file" id="importFile" accept=".esd">
+        </div>
+        <div class="card-info" ><input id="currentIndexNumber" type="number" value="1" /><span id="cardInfo"> of 1</span></div>
+        <div class="editor-container">
+            <div contenteditable="true" id="editor" class="editor" role="textbox" aria-label="Text editor"></div>
+            <div class="toolbar">
+                <button class="tool-btn" id="boldBtn" aria-label="Bold text"><b>B</b></button>
+                <button class="tool-btn" id="decreaseFont" aria-label="Decrease font size">-</button>
+                <span class="font-size-display" id="fontSizeDisplay">14</span>
+                <button class="tool-btn" id="increaseFont" aria-label="Increase font size">+</button>
+                <div class="highlight-colors">
+                    <span aria-hidden="true"></span>
+                    <div class="highlight-color no-select active" style="background:#fff;" data-color="#fff"></div>
+                    <div class="highlight-color no-select" style="background:#fef08a" data-color="#fef08a"></div>
+                    <div class="highlight-color no-select" style="background:#f1cbff" data-color="#f1cbff"></div>
+                    <div class="highlight-color no-select" style="background:#bbf7d0" data-color="#bbf7d0"></div>
+                    <div class="highlight-color no-select" style="background:#fbcfcf" data-color="#fbcfcf"></div>
+                </div>
+
+                <button class="align-btn" id="alignLeftBtn" aria-label="Align text left">←</button>
+                <button class="align-btn" id="alignCenterBtn" aria-label="Align text center">↔</button>
+                <button class="align-btn" id="alignRightBtn" aria-label="Align text right">→</button>
+
+                <button class="align-btn" id="removeFormatBtn" aria-label="Remove Format">⚡︎</button>
+
+
+                <button id="deleteCardBtn" class="nav-btn delete-card-btn">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="nav-buttons">
+            <button id="prevBtn" class="nav-btn" disabled>
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6z"/>
+                </svg>
+                Previous
+            </button>
+            <button id="newCardBtn" class="nav-btn new-card-btn">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z"/>
+                </svg>
+                New Card
+            </button>
+
+
+
+            <button id="nextBtn" class="nav-btn">
+                Next
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M8.59 16.59L13.17 12l-4.58-4.59L10 6l6 6-6 6z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="search-container">
+        <div class="search-wrapper">
+            <input type="text" id="searchInput" placeholder="Search flashcards..." autocomplete="off">
+            <div class="dropdown" id="dropdown"></div>
+        </div>
+    </div>
+</div>
+
+    <script>
+        let currentDb = localStorage.getItem('esd_currentDb') || 'default';
+        let databases = JSON.parse(localStorage.getItem('esd_databases')) || ['default'];
+        let flashcards = JSON.parse(localStorage.getItem(`esd_flashcards_${currentDb}`)) || [{ content: '' }];
+        let currentIndex = parseInt(localStorage.getItem(`esd_currentCardIndex_${currentDb}`)) || 0;
+        let currentAlignment = localStorage.getItem(`esd_textAlignment_${currentDb}`) || 'center';
+
+
+        const editor = document.getElementById('editor');
+        const fontSizeDisplay = document.getElementById('fontSizeDisplay');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const newCardBtn = document.getElementById('newCardBtn');
+        const cardInfo = document.getElementById('cardInfo');
+        const searchInput = document.getElementById('searchInput');
+        const dropdown = document.getElementById('dropdown');
+        const exportBtn = document.getElementById('exportBtn');
+        const importBtn = document.getElementById('importBtn');
+        const importFile = document.getElementById('importFile');
+        const manageDbBtn = document.getElementById('manageDbBtn');
+        const dbDropdown = document.getElementById('dbDropdown');
+        const deleteCardBtn = document.getElementById('deleteCardBtn');
+        const removeFormatBtn = document.getElementById('removeFormatBtn');
+        const currentIndexNum = document.getElementById('currentIndexNumber');
+
+
+        let selectedColor = '#fff';
+        let currentFontSize = 14;
+
+        const SaveTimeout = 200;//100ms
+
+/// === clalculate height 
+  /*      function setViewportHeight() {
+          const vh = window.innerHeight;
+          document.documentElement.style.setProperty('--vh', `${vh}px`);
+        }
+
+        window.addEventListener('resize', setViewportHeight);
+        window.addEventListener('orientationchange', setViewportHeight);
+        setViewportHeight();
+        */
+/// === clalculate height 
+
+
+        function updateCard() {
+            currentIndex = Math.min(Math.max(0, currentIndex), flashcards.length - 1);
+            editor.innerHTML = flashcards[currentIndex].content || '';
+           // cardInfo.textContent = `${currentIndex + 1} of ${flashcards.length} (${currentDb})`;
+            cardInfo.textContent = `of ${flashcards.length} (${currentDb})`;
+            currentIndexNum.value = currentIndex + 1;
+            prevBtn.disabled = currentIndex === 0;
+            nextBtn.disabled = currentIndex === flashcards.length - 1;
+            deleteCardBtn.disabled = currentIndex === 0;
+            localStorage.setItem(`esd_currentCardIndex_${currentDb}`, currentIndex);
+            localStorage.setItem(`esd_textAlignment_${currentDb}`, currentAlignment);
+            updateDropdown('');
+        }
+
+        function saveFlashcards() {
+            flashcards[currentIndex].content = editor.innerHTML;
+            localStorage.setItem(`esd_flashcards_${currentDb}`, JSON.stringify(flashcards));
+            //console.log("savad");
+        }
+
+        function removeHtmlExceptBr(input, isConvertToSpace = true) {
+            if(isConvertToSpace)
+            {
+                return input.replace(/<br\s*\/?>/gi, ' ')     // Replace <br>, <br/>, or <br /> with a space
+                .replace(/<[^>]+>/g, '');         // Remove all remaining HTML tags
+            }
+            else
+            {
+                const ch = "---/br/---";
+                let txt = input.replace(/<br\s*\/?>/gi, ch);     // Replace <br>, <br/>, or <br /> with a space
+                txt = txt.replace(/<[^>]+>/g, '').replace(/---\/br\/---/g, "<br/>");        
+                return txt;           
+            }
+
+        }
+
+        function getHighlightedPreview(content, query) {
+            const char_count = 50;//20
+            if (!content || !query) return '... No content ...';
+            const lowerContent = removeHtmlExceptBr(content.toLowerCase());         
+            const lowerQuery = query.toLowerCase();
+            const index = lowerContent.indexOf(lowerQuery);
+            const txt_content = removeHtmlExceptBr(content);
+            if (index === -1) return txt_content.length > 50 ? '... ' + txt_content.substring(0, 47) + ' ...' : '... ' + txt_content + ' ...';
+
+            const start = Math.max(0, index - char_count);
+            const end = Math.min(content.length, index + query.length + char_count);
+            let preview = txt_content.substring(start, end);
+            preview = (start > 0 ? '...' : '') + preview + (end < content.length ? '...' : '');
+            const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            return preview.replace(
+                new RegExp(escapedQuery, 'gi'),
+                match => `<span class="highlight">${match}</span>`
+            );
+        }
+
+        function updateDropdown(query) {
+            dropdown.innerHTML = '';
+            if (!query) {
+                dropdown.style.display = 'none';
+                return;
+            }
+            const ITEMS_LIMIT = 100;//100 // Get only the first 100 results
+
+
+            const lowerQuery = query.toLowerCase();
+            const matches = flashcards
+                .map((card, index) => ({ card, index }))
+                .filter(({ card }) => card.content.toLowerCase().replace(/<[^>]+>/g, '').includes(lowerQuery)).slice(0, ITEMS_LIMIT);
+
+            if (matches.length === 0) {
+                dropdown.style.display = 'none';
+                return;
+            }
+
+            matches.forEach(({ card, index }) => {
+                const div = document.createElement('div');
+                div.className = 'dropdown-item';
+                div.title = removeHtmlExceptBr(card.content);//opt
+                div.innerHTML = getHighlightedPreview(card.content, query) || '... No content ...';
+                div.addEventListener('click', () => {
+                    currentIndex = index;
+                    updateCard();
+                    dropdown.style.display = 'none';
+                    searchInput.value = '';
+                });
+                dropdown.appendChild(div);
+            });
+
+            dropdown.style.display = 'block';
+        }
+
+        function updateDbDropdown() {
+            dbDropdown.innerHTML = '';
+
+//== add db btn ==
+                const _div = document.createElement('div');
+                _div.className = 'db-item';
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = '+ Add DB';
+                nameSpan.style.flexGrow = '1';
+                nameSpan.addEventListener('click', () => {
+                    addNewDB();
+                    dbDropdown.style.display = 'none';
+                });
+
+                _div.appendChild(nameSpan);
+                dbDropdown.appendChild(_div);
+//== add db btn ==
+
+
+        //    if (databases.length === 0) {
+        //        dbDropdown.style.display = 'none';
+        //        return;
+        //    }
+
+            databases.forEach(db => {
+                const div = document.createElement('div');
+                div.className = 'db-item';
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = db;
+                nameSpan.style.flexGrow = '1';
+                nameSpan.addEventListener('click', () => {
+                    currentDb = db;
+                    localStorage.setItem('esd_currentDb', currentDb);
+                    flashcards = JSON.parse(localStorage.getItem(`esd_flashcards_${currentDb}`)) || [{ content: '' }];
+                    currentIndex = parseInt(localStorage.getItem(`esd_currentCardIndex_${currentDb}`)) || 0;
+                    currentAlignment = localStorage.getItem(`esd_textAlignment_${currentDb}`) || 'center';
+                    updateCard();
+                    updateEditorAlignment();
+                    dbDropdown.style.display = 'none';
+                });
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.textContent = 'X';
+                deleteBtn.addEventListener('click', () => {
+                    if (db === currentDb && databases.length > 1) {
+                        alert('Cannot delete the current database. Switch to another database first.');
+                        return;
+                    }
+                    if (!confirm(`Are you sure you want to delete the database "${db}"? This action cannot be undone.`)) {
+                        return;
+                    }
+                    databases = databases.filter(d => d !== db);
+                    localStorage.removeItem(`esd_flashcards_${db}`);
+                    localStorage.removeItem(`esd_currentCardIndex_${db}`);
+                    localStorage.removeItem(`esd_textAlignment_${db}`);
+                    localStorage.setItem('esd_databases', JSON.stringify(databases));
+                    if (db === currentDb) {
+                        currentDb = databases[0] || 'default';
+                        localStorage.setItem('esd_currentDb', currentDb);
+                        flashcards = JSON.parse(localStorage.getItem(`esd_flashcards_${currentDb}`)) || [{ content: '' }];
+                        currentIndex = 0;
+                        updateCard();
+                    }
+                    updateDbDropdown();
+                });
+                div.appendChild(nameSpan);
+                div.appendChild(deleteBtn);
+                dbDropdown.appendChild(div);
+            });
+
+            dbDropdown.style.display = 'block';
+        }
+
+        // Editor functionality
+        const toggleActiveBtn = (id) => {
+            document.querySelectorAll('.tool-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.id === id);
+            });
+        };
+
+        const updateFontSizeDisplay = () => {
+            fontSizeDisplay.textContent = currentFontSize;
+        };
+
+        const getHighlightedSpan = (node) => {
+            while (node && node !== editor) {
+                if (node.classList && node.classList.contains('highlighted')) {
+                    return node;
+                }
+                node = node.parentElement;
+            }
+            return null;
+        };
+
+        const isSelectionInEditor = () => {
+            const sel = window.getSelection();
+            if (!sel.rangeCount) return false;
+            const range = sel.getRangeAt(0);
+            return editor.contains(range.commonAncestorContainer);
+        };
+
+        const applyStyle = (styleObj) => {
+            if (!isSelectionInEditor()) return;
+
+            const sel = window.getSelection();
+            if (!sel.rangeCount) return;
+
+            let range = sel.getRangeAt(0);
+            const selectedText = range.toString();
+            let node = range.startContainer;
+            let offset = range.startOffset;
+
+            // If no selection, select the word around cursor
+            if (!selectedText.trim()) {
+                if (node.nodeType !== 3) return; // Only handle text nodes
+
+                const text = node.textContent;
+                let start = offset;
+                let end = offset;
+
+                // Find word boundaries (spaces or start/end)
+                while (start > 0 && text[start - 1] !== ' ') start--;
+                while (end < text.length && text[end] !== ' ') end++;
+
+                if (start === end) return; // No word found
+
+                range.setStart(node, start);
+                range.setEnd(node, end);
+            }
+
+            // Remove any existing highlighted span in the range
+            let span = getHighlightedSpan(range.commonAncestorContainer);
+            if (span) {
+                const textNode = document.createTextNode(span.textContent);
+                span.replaceWith(textNode);
+                range.selectNodeContents(textNode);
+            }
+
+            // Clone the range contents to preserve structure
+            const fragment = range.cloneContents();
+
+            // Apply new styles
+            const newSpan = document.createElement('span');
+            newSpan.className = 'highlighted';
+
+            // If white highlight is selected, apply only font size and bold styles
+            if (styleObj.backgroundColor === '#fff') {
+                newSpan.style.fontSize = styleObj.fontSize || `${currentFontSize}px`;
+                newSpan.style.fontWeight = styleObj.fontWeight || 'normal';
+            } else {
+                // Apply all provided styles, overriding any previous ones
+                newSpan.style.fontSize = styleObj.fontSize || `${currentFontSize}px`;
+                newSpan.style.fontWeight = styleObj.fontWeight || 'normal';
+                newSpan.style.backgroundColor = styleObj.backgroundColor || 'transparent';
+            }
+
+            newSpan.appendChild(fragment);
+            range.deleteContents();
+            range.insertNode(newSpan);
+
+            // Restore selection
+            const newRange = document.createRange();
+            newRange.selectNodeContents(newSpan);
+            sel.removeAllRanges();
+            sel.addRange(newRange);
+
+            saveFlashcards();
+        };
+
+        const debounce = (fn, delay) => {
+            let timeout;
+            return (...args) => {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => fn(...args), delay);
+            };
+        };
+
+
+        deleteCardBtn.addEventListener('click', () => {
+
+
+        if (flashcards.length === 1) {
+                alert('Cannot delete the only card. At least one card is required.');
+                return;
+            }
+        if (!confirm(`Are you sure you want to delete card ${currentIndex + 1}? This action cannot be undone.`)) {
+            return;
+            }
+            flashcards.splice(currentIndex, 1);
+            if (currentIndex >= flashcards.length) {
+                currentIndex = flashcards.length - 1;
+            }
+            if (flashcards.length === 0) {
+                flashcards.push({ content: '' });
+                currentIndex = 0;
+            }
+            updateCard();
+            saveFlashcards();
+
+
+        });
+
+        document.querySelectorAll('.highlight-color').forEach(color => {
+            color.addEventListener('click', (e) => {
+                if (!editor.contains(document.activeElement)) {
+                    editor.focus();
+                }
+                selectedColor = color.dataset.color;
+                document.querySelectorAll('.highlight-color').forEach(c => {
+                    c.classList.toggle('active', c === color);
+                });
+                applyStyle({ backgroundColor: selectedColor, fontSize: `${currentFontSize}px` });
+            });
+        });
+
+        document.getElementById('boldBtn').addEventListener('click', () => {
+            if (!editor.contains(document.activeElement)) {
+                editor.focus();
+            }
+            applyStyle({ fontWeight: 'bold', backgroundColor: selectedColor, fontSize: `${currentFontSize}px` });
+        });
+
+        document.getElementById('increaseFont').addEventListener('click', () => {
+            if (!editor.contains(document.activeElement)) {
+                editor.focus();
+            }
+            currentFontSize = Math.min(currentFontSize + 2, 40);
+            applyStyle({ fontSize: `${currentFontSize}px`, backgroundColor: selectedColor });
+            toggleActiveBtn('increaseFont');
+            updateFontSizeDisplay();
+        });
+
+        document.getElementById('decreaseFont').addEventListener('click', () => {
+            if (!editor.contains(document.activeElement)) {
+                editor.focus();
+            }
+            currentFontSize = Math.max(currentFontSize - 2, 10);
+            applyStyle({ fontSize: `${currentFontSize}px`, backgroundColor: selectedColor });
+            toggleActiveBtn('decreaseFont');
+            updateFontSizeDisplay();
+        });
+
+        document.getElementById('alignLeftBtn').addEventListener('click', () => {
+            currentAlignment = 'left';
+             updateEditorAlignment();
+             updateCard();//for save
+        });
+
+        document.getElementById('alignCenterBtn').addEventListener('click', () => {
+            currentAlignment = 'center';
+            updateEditorAlignment();
+            updateCard();//for save
+
+        });
+
+        document.getElementById('alignRightBtn').addEventListener('click', () => {
+            currentAlignment = 'right';
+            updateEditorAlignment();
+            updateCard();//for save
+
+        });
+
+    currentIndexNum.addEventListener('change', () => { //or input
+      
+      const num = parseInt(currentIndexNum.value, 10); 
+      if (isNaN(num)) {
+        currentIndex = 0;
+        currentIndexNum.value = 1;
+      }
+      else
+      {
+        if (num < flashcards.length && num >= 0) {
+            currentIndex = num-1;
+        }
+        else
+        {
+            currentIndex = flashcards.length - 1;
+            currentIndexNum.value = flashcards.length;
+        }
+      }
+
+        updateCard();
+    });
+
+        removeFormatBtn.addEventListener('click', () => {
+   
+                editor.innerHTML = removeHtmlExceptBr(editor.innerHTML, false);
+
+        });
+
+        function updateEditorAlignment()
+        {
+            editor.style.textAlign = currentAlignment;
+        }
+
+
+
+        editor.addEventListener('input', debounce(() => {
+            if (!editor.textContent.trim()) editor.innerHTML = '';
+            saveFlashcards();
+        }, SaveTimeout));
+
+        // Export flashcards to .esd file
+        exportBtn.addEventListener('click', () => {
+            const data = JSON.stringify(flashcards);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${currentDb}.esd`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        // Trigger file input on import button click
+        importBtn.addEventListener('click', () => {
+            importFile.click();
+        });
+
+        // Import flashcards from .esd file
+        importFile.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file || !file.name.endsWith('.esd')) {
+                alert('Please select a valid .esd file');
+                return;
+            }
+            const dbName = file.name.replace('.esd', '');
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (Array.isArray(importedData) && importedData.every(card => typeof card.content === 'string')) {
+                        if (!databases.includes(dbName)) {
+                            databases.push(dbName);
+                            localStorage.setItem('esd_databases', JSON.stringify(databases));
+                        }
+                        localStorage.setItem(`esd_flashcards_${dbName}`, JSON.stringify(importedData));
+                        localStorage.setItem(`esd_currentCardIndex_${dbName}`, '0');
+                        localStorage.setItem(`esd_textAlignment_${dbName}`, currentAlignment);
+                        currentDb = dbName;
+                        localStorage.setItem('esd_currentDb', currentDb);
+                        flashcards = importedData;
+                        currentIndex = 0;
+                        updateCard();
+                    } else {
+                        alert('Invalid .esd file format');
+                    }
+                } catch (error) {
+                    alert('Error reading .esd file');
+                }
+                // Reset file input
+                importFile.value = '';
+            };
+            reader.readAsText(file);
+        });
+
+        function addNewDB()
+        {
+              const dbName = prompt("Insert DB name:"); 
+              if (dbName !== null && dbName.trim() !== '')
+              {
+                  if (!databases.includes(dbName)) {
+
+                            databases.push(dbName);
+                            localStorage.setItem('esd_databases', JSON.stringify(databases));
+                            localStorage.setItem(`esd_flashcards_${dbName}`, JSON.stringify(''));
+                            localStorage.setItem(`esd_currentCardIndex_${dbName}`, '0');
+                            localStorage.setItem(`esd_textAlignment_${dbName}`, currentAlignment);
+                            currentDb = dbName;
+                            localStorage.setItem('esd_currentDb', currentDb);
+                            flashcards = [{ content: '' }];
+                            currentIndex = 0;
+                            updateCard();
+                    }
+                    else 
+                    {
+                      alert('DB name already exist!');
+                    }
+               }
+
+                   
+        }
+
+        // Toggle database dropdown
+        manageDbBtn.addEventListener('click', () => {
+            if (dbDropdown.style.display === 'block') {
+                dbDropdown.style.display = 'none';
+            } else {
+                updateDbDropdown();
+            }
+        });
+
+        prevBtn.addEventListener('click', () => {
+            if (currentIndex > 0) {
+                currentIndex--;
+                updateCard();
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentIndex < flashcards.length - 1) {
+                currentIndex++;
+                updateCard();
+            }
+        });
+
+        newCardBtn.addEventListener('click', () => {
+            flashcards.push({ content: '' });
+            currentIndex = flashcards.length - 1;
+            updateCard();
+        });
+
+        searchInput.addEventListener('input', () => {
+            const query = searchInput.value;
+            updateDropdown(query);
+        });
+
+        // Hide dropdowns when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.style.display = 'none';
+            }
+            if (!manageDbBtn.contains(e.target) && !dbDropdown.contains(e.target)) {
+                dbDropdown.style.display = 'none';
+            }
+        });
+
+        // Navigate cards with left and right arrow keys
+        document.addEventListener('keydown', (e) => {
+            if (document.activeElement === searchInput || document.activeElement === editor) {
+                return;
+            }
+            if (e.key === 'ArrowLeft' && currentIndex > 0) {
+                currentIndex--;
+                updateCard();
+            } else if (e.key === 'ArrowRight' && currentIndex < flashcards.length - 1) {
+                currentIndex++;
+                updateCard();
+            }
+        });
+
+        // Initialize
+        updateCard();
+        updateFontSizeDisplay();
+        updateEditorAlignment();
+    </script>
+</body>
+</html>
